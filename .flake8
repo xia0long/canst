@@ -1,0 +1,13 @@
+[flake8]
+max-complexity = 15
+max-line-length = 88
+statistics = True
+
+                # Black Compatibility
+extend-ignore = E203, W503,
+
+                # Unused imports, wildcard imports, and unused variables
+                F401, F403, F405, E501,
+
+# Set this to match black style:
+inline-quotes = double
