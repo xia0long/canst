@@ -6,6 +6,7 @@ import click
 from .constants import *
 from .device import init_dev
 from .dumper import dump
+from .sniffer import sniff
 from .sender import send
 from .fuzzer import random_fuzz, mutate_fuzz
 
@@ -41,6 +42,11 @@ def dumper(arb_id_filter, data_filter, log_path):
     if log_path:
         log_path = "candump-{}.log".format(datetime.now().strftime("%Y-%m-%d_%H_%M_%S"))
     dump(dev, arb_id_filter, data_filter, log_path)
+
+
+@canst.command(help="Sniffer CAN bus traffic.")
+def sniffer():
+    sniff(dev)
 
 
 @canst.command(help="Send CAN bus traffic.")
