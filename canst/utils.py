@@ -1,6 +1,8 @@
 import os
 import random
 
+import cantools
+
 from .can import Frame
 from .constants import *
 
@@ -55,3 +57,35 @@ def generate_random_data(
     data_len = random.randint(min_data_len, max_data_len)
     data = [random.randint(MIN_BYTE, MAX_BYTE) for i in range(data_len)]
     return data
+
+
+def dbc_to_dict(file_path):
+    """Convert dbc file to a dict."""
+    D = {}
+    db = cantools.db.load_file(file_path)
+    for message in db.messages:
+        D[message.frame_id] = {
+            "id": hex(message.frame_id),
+            "name": message.name,
+            "length": message.length,
+            "cycle_time": message.cycle_time,
+            "is_extended_frame": message.is_extended_frame,
+            "signals": {},
+        }
+
+        for signal in message.signals:
+            D[message.frame_id]["signals"][signal.name] = {
+                "name": signal.name,
+                "unit": signal.unit,
+                "start": signal.start,
+                "length": signal.length,
+                "factor": signal.scale,
+                "offset": signal.offset,
+                "maximum": signal.maximum,
+                "minimum": signal.minimum,
+                "is_big_endian": False
+                if signal.byte_order == "little_endian"
+                else True,
+            }
+
+    return D

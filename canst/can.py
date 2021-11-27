@@ -4,6 +4,7 @@ import socket
 
 from dataclasses import dataclass
 
+
 class FrameType:
     DataFrame = 1
     RemoteFrame = 2

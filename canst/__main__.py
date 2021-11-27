@@ -45,8 +45,11 @@ def dumper(arb_id_filter, data_filter, log_path):
 
 
 @canst.command(help="Sniffer CAN bus traffic.")
-def sniffer():
-    sniff(dev)
+@click.option(
+    "-fp", "--file_path", type=str, default=None, help="DBC file to read from."
+)
+def sniffer(file_path):
+    sniff(dev, file_path)
 
 
 @canst.command(help="Send CAN bus traffic.")
@@ -60,7 +63,7 @@ def sniffer():
 )
 @click.option("--arb_id_filter", type=str, default=None, help="Filter by CAN ID.")
 @click.option(
-    "-d", "--delay", type=int, default=DELAY, help="Delay between sending messages."
+    "-d", "--delay", type=float, default=DELAY, help="Delay between sending messages."
 )
 @click.option("-l", "--loop", is_flag=True, help="Loop sending messages.")
 def sender(message, file_path, start_line, end_line, arb_id_filter, delay, loop):

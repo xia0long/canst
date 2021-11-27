@@ -17,8 +17,7 @@ def get_frame_from_file(
 
     f = open(file_path, "r")
     current_line_index = 0
-    while True:
-        line = f.readline()
+    for line in f.readlines():
         if not line:
             continue
 
@@ -38,7 +37,7 @@ def get_frame_from_file(
                 current_line_index += 1
                 continue
 
-        frame = str_to_frame(line.split(" ")[1])
+        frame = str_to_frame(line.split(" ")[-1])
         yield frame
 
 
@@ -55,8 +54,9 @@ def send(
 
     try:
         while True:
-            dev.send(str_to_frame(message))
-            time.sleep(delay)
+            if message:
+                dev.send(str_to_frame(message))
+                time.sleep(delay)
 
             if file_path:
                 frames = get_frame_from_file(
@@ -65,8 +65,8 @@ def send(
                     end_line=end_line,
                     arb_id_filter=arb_id_filter,
                 )
-                for m in frames:
-                    dev.send(m)
+                for frame in frames:
+                    dev.send(frame)
                     time.sleep(delay)
             if not loop:
                 break
