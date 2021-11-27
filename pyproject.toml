@@ -8,6 +8,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.8"
 click = "^8.0.3"
+cantools = "^36.7.0"
 
 [tool.poetry.dev-dependencies]
 pytest-cov = "^3.0.0"
