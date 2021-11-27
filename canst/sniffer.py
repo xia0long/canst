@@ -58,7 +58,7 @@ def draw_table(stdscr, dev, T, DBC):
             binary = not binary
         elif k == ord("e"):  # show/hide signal detail
             line = stdscr.instr(26).decode()
-            if line[0] == "+":
+            if line[0] in ["+", "-"]:
                 arb_id = int(line.strip().split(" ")[-1], 16)
                 if arb_id not in expanded_arb_ids.keys():
                     expanded_arb_ids[arb_id] = True
@@ -89,16 +89,20 @@ def draw_table(stdscr, dev, T, DBC):
             row = " {:<10.3f} {:<6s} {:<8s} {}".format(
                 frame.timestamp, dev.ndev, hex(arb_id)[2:], data
             )
-            if arb_id in DBC.keys():
-                row = "+{:<10.3f} {:<6s} {:<8s} {}".format(
-                    frame.timestamp, dev.ndev, hex(arb_id)[2:], data
-                )
-            table.append(row)
-            if arb_id in expanded_arb_ids.keys() and expanded_arb_ids[arb_id] == True:
+            if (
+                arb_id in DBC.keys()
+                and arb_id in expanded_arb_ids.keys()
+                and expanded_arb_ids[arb_id] == True
+            ):
+                table.append("-" + row[1:])
                 for name, signal in DBC[arb_id]["signals"].items():
                     value = get_value(signal, frame.data)
                     unit = signal["unit"] if signal["unit"] else ""
                     table.append("|---{}: {} {}".format(name, value, unit))
+            elif arb_id in DBC.keys():
+                table.append("+" + row[1:])
+            else:
+                table.append(row)
 
         stdscr.clear()
         stdscr.addstr(
@@ -110,7 +114,7 @@ def draw_table(stdscr, dev, T, DBC):
         # Rendering status bar
         stdscr.attron(curses.color_pair(1))
         status_bar_str = "Press 'q' to exit | POS: {}, {} | FPS: {}".format(
-            cursor_x, cursor_y, fps 
+            cursor_x, cursor_y, fps
         )
         stdscr.addstr(height - 1, 0, status_bar_str)
         stdscr.addstr(
