@@ -31,7 +31,7 @@ def str_to_frame(s: str) -> Frame:
     return Frame(arb_id=arb_id, data=data)
 
 
-def frame_to_str(frame: Frame) -> str:
+def frame_data_to_ascii(frame: Frame) -> str:
     """Convert can data from str to ascii.
     use '.' to replace the byte can't be print."""
     return "".join(chr(b) if (b >= 0x20 and b <= 0x7E) else "." for b in frame.data)

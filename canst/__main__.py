@@ -20,7 +20,9 @@ def exit_early(ctx, param, value):
 
 print("canst v0.1\n")
 
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
+
 @click.group(context_settings=CONTEXT_SETTINGS)
 def canst():
     """The entry point for canst."""
@@ -44,7 +46,7 @@ def dumper(arb_id_filter, data_filter, log_path):
     dump(dev, arb_id_filter, data_filter, log_path)
 
 
-@canst.command(help="Sniffer CAN bus traffic.")
+@canst.command(help="Sniff CAN bus traffic.")
 @click.option(
     "-fp", "--file_path", type=str, default=None, help="DBC file to read from."
 )
@@ -53,8 +55,16 @@ def sniffer(file_path):
 
 
 @canst.command(help="Send CAN bus traffic.")
-@click.option("-m", "--message", default=None, help="Message to send.")
-@click.option("--file_path", type=str, default=None, help="File to read from.")
+@click.option("-m", "--messages", default=list, multiple=True, help="Message to send.")
+@click.option(
+    "-d",
+    "--delays",
+    type=float,
+    default=list,
+    multiple=True,
+    help="Delay between sending messages.",
+)
+@click.option("-fp", "--file_path", type=str, default=None, help="File to read from.")
 @click.option(
     "--start_line", type=int, default=None, help="The start line number read from file."
 )
@@ -62,12 +72,9 @@ def sniffer(file_path):
     "--end_line", type=int, default=None, help="The end line number read from file."
 )
 @click.option("--arb_id_filter", type=str, default=None, help="Filter by CAN ID.")
-@click.option(
-    "-d", "--delay", type=float, default=DELAY, help="Delay between sending messages."
-)
 @click.option("-l", "--loop", is_flag=True, help="Loop sending messages.")
-def sender(message, file_path, start_line, end_line, arb_id_filter, delay, loop):
-    send(dev, message, file_path, start_line, end_line, arb_id_filter, delay, loop)
+def sender(messages, delays, file_path, start_line, end_line, arb_id_filter, loop):
+    send(dev, messages, delays, file_path, start_line, end_line, arb_id_filter, loop)
 
 
 @canst.group(help="CAN message fuzzing tool.")
