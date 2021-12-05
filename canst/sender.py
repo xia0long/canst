@@ -6,7 +6,7 @@ from .constants import DELAY
 from .utils import *
 
 
-def get_frame_from_file(
+def get_frame_list_from_file(
     file_path: str = None,
     start_line: int = None,
     end_line: int = None,
