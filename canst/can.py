@@ -42,12 +42,17 @@ class SocketCanDev:
         self.start_time = time.time()
         self.running = True
 
-    def recv(self):
+    def recv(self, timeout=1.0):
         assert self.running, "device is not running"
+        self.socket.settimeout(timeout)
         frame_format = "=IB3xBBBBBBBB"
         frame_size = struct.calcsize(frame_format)
 
-        frame_raw = self.socket.recv(frame_size)
+        try:
+            frame_raw = self.socket.recv(frame_size)
+        except socket.timeout:
+            return None
+
         arb_id, dlc, d0, d1, d2, d3, d4, d5, d6, d7 = struct.unpack(
             frame_format, frame_raw
         )
