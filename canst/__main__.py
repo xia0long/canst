@@ -71,10 +71,9 @@ def sniffer(file_path):
 @click.option(
     "--end_line", type=int, default=None, help="The end line number read from file."
 )
-@click.option("--arb_id_filter", type=str, default=None, help="Filter by CAN ID.")
 @click.option("-l", "--loop", is_flag=True, help="Loop sending messages.")
-def sender(messages, delays, file_path, start_line, end_line, arb_id_filter, loop):
-    send(dev, messages, delays, file_path, start_line, end_line, arb_id_filter, loop)
+def sender(messages, delays, file_path, start_line, end_line, loop):
+    send(dev, messages, delays, file_path, start_line, end_line, loop)
 
 
 @canst.group(help="CAN message fuzzing tool.")

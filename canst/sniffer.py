@@ -30,12 +30,26 @@ def parse_data(data, mode):
 
 
 def traffic_handler(dev, T):
+    start_time = time.time()
     while True:
         frame = dev.recv()
-        T[frame.arb_id] = frame
+        if frame.arb_id not in T.keys():
+            T[frame.arb_id] = [frame]
+        else:
+            T[frame.arb_id] += [frame]
+
+        # Retain the frame in five second
+        for arb_id, frame_list in T.items():
+            for index, frame in enumerate(frame_list):
+                if time.time() - start_time - frame.timestamp > 5:
+                    frame_list.pop(index)
+                    T[arb_id] = frame_list
+                else:
+                    break
 
 
 def draw_table(stdscr, dev, T, DBC):
+    value = 0
     k = 0
     fps = 0
     offset = 0
@@ -57,7 +71,7 @@ def draw_table(stdscr, dev, T, DBC):
         if k == ord("b"):  # binary/normal mode switch
             binary = not binary
         elif k == ord("e"):  # show/hide signal detail
-            line = stdscr.instr(26).decode()
+            line = stdscr.instr(27).decode()
             if line[0] in ["+", "-"]:
                 arb_id = int(line.strip().split(" ")[-1], 16)
                 if arb_id not in expanded_arb_ids.keys():
@@ -84,29 +98,37 @@ def draw_table(stdscr, dev, T, DBC):
         cursor_x = min(width - 1, cursor_x)
 
         table = []
-        for arb_id, frame in sorted(T.items()):
+        for arb_id, frame_list in sorted(T.items()):
+            if not frame_list:
+                continue
+            frame = frame_list[-1]  # get the latest frame
+
             data = parse_data(frame.data, binary)
-            row = " {:<10.3f} {:<6s} {:<8s} {}".format(
-                frame.timestamp, dev.ndev, hex(arb_id)[2:], data
+            row = "{:<10.3f} {:<6s} {:<8s} {:<25s} {}".format(
+                frame.timestamp, dev.ndev, hex(arb_id)[2:], data, len(frame_list) / 5
             )
             if (
                 arb_id in DBC.keys()
                 and arb_id in expanded_arb_ids.keys()
                 and expanded_arb_ids[arb_id] == True
             ):
-                table.append("-" + row[1:])
+                table.append("-" + row)
                 for name, signal in DBC[arb_id]["signals"].items():
                     value = get_value(signal, frame.data)
                     unit = signal["unit"] if signal["unit"] else ""
                     table.append("|---{}: {} {}".format(name, value, unit))
             elif arb_id in DBC.keys():
-                table.append("+" + row[1:])
+                table.append("+" + row)
             else:
-                table.append(row)
+                table.append(" " + row)
 
         stdscr.clear()
         stdscr.addstr(
-            0, 0, " {:<10s} {:<6s} {:<8s} {}".format("Time", "Dev", "ID", "Data")
+            0,
+            0,
+            " {:<10s} {:<6s} {:<8s} {:<25s} {}".format(
+                "Time", "Dev", "ID", "Data", "FPS"
+            ),
         )
         for index, line in enumerate(table[offset : offset + height - 2]):
             stdscr.addstr(index + 1, 0, line)

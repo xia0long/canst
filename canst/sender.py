@@ -11,12 +11,12 @@ def get_frame_from_file(
     start_line: int = None,
     end_line: int = None,
 ) -> list:
-    
+
     frame_list = []
     with open(file_path, "r") as f:
         index = 0
         for line in f.readlines():
-            
+
             # Skip the lines before the start line
             if start_line is not None and index < start_line:
                 index += 1
@@ -30,7 +30,7 @@ def get_frame_from_file(
                 index += 1
             frame = str_to_frame(line.split(" ")[-1])
             frame_list.append(frame)
-    
+
     return frame_list
 
 
