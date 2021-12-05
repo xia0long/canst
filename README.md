@@ -43,7 +43,7 @@ canst fuzzer mutate -m 1.3#1.2.3..
 ```sh
 canst sniffer
 
-canst sniffer --fp DBC_FILE_PATH
+canst sniffer --dbc DBC_FILE_PATH
 ```
 
 ## License

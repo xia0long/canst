@@ -62,7 +62,7 @@ def send(
                 dev.send(str_to_frame(message))
 
         elif file_path:
-            frames = get_frame_from_file(
+            frames = get_frame_list_from_file(
                 file_path,
                 start_line=start_line,
                 end_line=end_line,

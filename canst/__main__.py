@@ -18,7 +18,7 @@ def exit_early(ctx, param, value):
         sys.exit()
 
 
-print("canst v0.1\n")
+print("canst v0.1.0\n")
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -47,11 +47,9 @@ def dumper(arb_id_filter, data_filter, log_path):
 
 
 @canst.command(help="Sniff CAN bus traffic.")
-@click.option(
-    "-fp", "--file_path", type=str, default=None, help="DBC file to read from."
-)
-def sniffer(file_path):
-    sniff(dev, file_path)
+@click.option("--dbc", type=str, default=None, help="DBC file to read from.")
+def sniffer(dbc):
+    sniff(dev, dbc)
 
 
 @canst.command(help="Send CAN bus traffic.")
@@ -108,17 +106,13 @@ def fuzzer():
 )
 @click.option("-d", "--delay", default=DELAY, help="Delay between sending messages.")
 def random(
-    arb_id_filter,
-    data_filter,
     min_arb_id,
     max_arb_id,
     min_data_len,
     max_data_len,
     delay,
 ):
-    random_fuzz(
-        dev, arb_id_filter, min_arb_id, max_arb_id, min_data_len, max_data_len, delay
-    )
+    random_fuzz(dev, min_arb_id, max_arb_id, min_data_len, max_data_len, delay)
 
 
 @fuzzer.command(help="Generate mutate messages and send them.")

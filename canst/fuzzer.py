@@ -42,7 +42,7 @@ def random_fuzz(
 
 def mutate_fuzz(dev, message: str, delay: float = DELAY) -> None:
     """Mutate fuzz."""
-    print(f"Send mutated messages(based on {message}), press 'control+c' to exit.")
+    print("Send mutated messages, press 'control+c' to exit.")
     init_arb_id, init_data = message.split("#")
 
     def arb_id_generator(arb_id):

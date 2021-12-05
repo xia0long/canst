@@ -29,23 +29,45 @@ def parse_data(data, mode):
     return data_str
 
 
+def update_t(start_time, T):
+    """Save frames in five second to T."""
+    for arb_id, frame_list in T.items():
+        for index, frame in enumerate(frame_list):
+            if time.time() - start_time - frame.timestamp > 5:
+                frame_list.pop(index)
+                T[arb_id] = frame_list
+            else:
+                break
+
+
 def traffic_handler(dev, T):
     start_time = time.time()
     while True:
         frame = dev.recv()
+        if not frame:
+            update_t(start_time, T)
+            continue
         if frame.arb_id not in T.keys():
             T[frame.arb_id] = [frame]
         else:
             T[frame.arb_id] += [frame]
 
-        # Retain the frame in five second
-        for arb_id, frame_list in T.items():
-            for index, frame in enumerate(frame_list):
-                if time.time() - start_time - frame.timestamp > 5:
-                    frame_list.pop(index)
-                    T[arb_id] = frame_list
-                else:
-                    break
+        update_t(start_time, T)
+
+
+# reference: https://support.vector.com/kb?id=kb_article_view&sysparm_article=KB0012332&sys_kb_id=99354e281b2614148e9a535c2e4bcb6d&spa=1
+def calculate_bus_load(baudrate=500000):
+    sum = 0
+    for _, frame_list in T.items():
+        if not frame_list:
+            continue
+        for frame in frame_list:
+            sum = sum + 11 if not frame.is_extended_id else sum + 29
+            sum += (
+                1 + 1 + 6 + len(frame.data) * 8 + 15 + 10 + 3 + 7 + 3
+            )  # 10 is an estimate of bit stuffing
+
+    return "{:.2f}".format(sum / 5.0 / float(baudrate) * 100)
 
 
 def draw_table(stdscr, dev, T, DBC):
@@ -135,8 +157,8 @@ def draw_table(stdscr, dev, T, DBC):
 
         # Rendering status bar
         stdscr.attron(curses.color_pair(1))
-        status_bar_str = "Press 'q' to exit | POS: {}, {} | FPS: {}".format(
-            cursor_x, cursor_y, fps
+        status_bar_str = "Press 'q' to exit | Bus Load: {}% | FPS: {}".format(
+            calculate_bus_load(), fps
         )
         stdscr.addstr(height - 1, 0, status_bar_str)
         stdscr.addstr(
@@ -151,12 +173,12 @@ def draw_table(stdscr, dev, T, DBC):
             start_time = time.time()
 
         stdscr.move(cursor_y, cursor_x)
-        time.sleep(0.02)
+        time.sleep(0.01)
         k = stdscr.getch()
 
 
-def sniff(dev, file_path: str = None) -> None:
+def sniff(dev, dbc: str = None) -> None:
     traffic_handler_process = Process(target=traffic_handler, args=[dev, T])
     traffic_handler_process.start()
-    DBC = dbc_to_dict(file_path) if file_path else {}
+    DBC = dbc_to_dict(dbc) if dbc else {}
     curses.wrapper(draw_table, dev, T, DBC)

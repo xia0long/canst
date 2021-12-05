@@ -7,7 +7,7 @@ from canst.sender import get_frame_list_from_file
 def test_get_frame_list_from_file():
 
     frame_list = get_frame_list_from_file(
-        file_path="candump.log", start_line=10, end_line=12
+        file_path="tests/data/candump.log", start_line=10, end_line=12
     )
 
     assert frame_list == [
