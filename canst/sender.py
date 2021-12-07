@@ -6,6 +6,19 @@ from .constants import DELAY
 from .utils import *
 
 
+def parse_line(line):
+    """
+    line format: (timestamp) canX arb_id#data
+    e.g. (1638179661.354936) can0 0CF00400#F07D86401FFFFFFF
+    """
+    part1, part2, part3 = line.split(" ")
+    return {
+        "timestamp": float(part1.strip("(").rstrip(")")),
+        "dev": part2,
+        "frame_str": part3,
+    }
+
+
 def get_frame_list_from_file(
     file_path: str = None,
     start_line: int = None,
@@ -15,8 +28,8 @@ def get_frame_list_from_file(
     frame_list = []
     with open(file_path, "r") as f:
         index = 0
-        for line in f.readlines():
-
+        data = f.readlines()
+        for index, line in enumerate(data[:-1]):
             # Skip the lines before the start line
             if start_line is not None and index < start_line:
                 index += 1
@@ -26,10 +39,15 @@ def get_frame_list_from_file(
             elif end_line is not None and index > end_line:
                 break
 
+            if index == total_lines - 2:  # the last line
+                delay = 0
             else:
-                index += 1
-            frame = str_to_frame(line.split(" ")[-1])
-            frame_list.append(frame)
+                next_line = data[index + 1]
+                delay = (
+                    parse_line(next_line)["timestamp"] - parse_line(line)["timestamp"]
+                )
+            frame = str_to_frame(parse_line(line)["frame_str"])
+            frame_list.append((frame, delay))
 
     return frame_list
 
@@ -62,15 +80,15 @@ def send(
                 dev.send(str_to_frame(message))
 
         elif file_path:
-            frames = get_frame_list_from_file(
+            data = get_frame_list_from_file(
                 file_path,
                 start_line=start_line,
                 end_line=end_line,
             )
             while True:
-                for frame in frames:
+                for frame, delay in data:
                     dev.send(frame)
-                    time.sleep(DELAY)
+                    time.sleep(delay)
                 if not loop:
                     break
         else:
