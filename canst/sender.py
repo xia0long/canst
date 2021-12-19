@@ -39,7 +39,7 @@ def get_frame_list_from_file(
             elif end_line is not None and index > end_line:
                 break
 
-            if index == total_lines - 2:  # the last line
+            if index == len(data) - 2:  # the last line
                 delay = 0
             else:
                 next_line = data[index + 1]
