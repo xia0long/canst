@@ -9,6 +9,7 @@ from .utils import *
 def random_fuzz(
     dev,
     arb_id_filter: str = None,
+    data_filter: str = None,
     min_arb_id: str = hex(MIN_ARB_ID)[2:],
     max_arb_id: str = hex(MAX_ARB_ID)[2:],
     min_data_len: int = MIN_DATA_LEN,

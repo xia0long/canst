@@ -14,6 +14,8 @@ def dump(
     try:
         while True:
             frame = dev.recv()
+            if not frame:
+                continue
             frame_id = hex(frame.arb_id)[2:]
             frame_data_str = frame_data_to_str(frame.data)
 

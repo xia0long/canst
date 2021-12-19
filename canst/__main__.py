@@ -10,8 +10,6 @@ from .sniffer import sniff
 from .sender import send
 from .fuzzer import random_fuzz, mutate_fuzz
 
-dev = init_dev("vcan0")
-
 
 def exit_early(ctx, param, value):
     if value:
@@ -24,9 +22,13 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
-def canst():
+@click.option(
+    "-i", "--interface", type=str, default="can0", help="Choose CAN bus interface."
+)
+def canst(interface):
     """The entry point for canst."""
-    pass
+    global dev
+    dev = init_dev(interface)
 
 
 @canst.command(help="Dump CAN bus traffic.")
@@ -80,8 +82,8 @@ def fuzzer():
 
 
 @fuzzer.command(help="Generate random messages and send them.")
-@click.option("--arb_id_filter", default=None, help="Filter by CAN ID.")
-@click.option("--data_filter", default=None, help="Filter by CAN data.")
+@click.option("--arb_id_filter", type=str, default=None, help="Filter by CAN ID.")
+@click.option("--data_filter", type=str, default=None, help="Filter by CAN data.")
 @click.option(
     "--min_arb_id",
     type=str,
@@ -106,13 +108,24 @@ def fuzzer():
 )
 @click.option("-d", "--delay", default=DELAY, help="Delay between sending messages.")
 def random(
+    arb_id_filter,
+    data_filter,
     min_arb_id,
     max_arb_id,
     min_data_len,
     max_data_len,
     delay,
 ):
-    random_fuzz(dev, min_arb_id, max_arb_id, min_data_len, max_data_len, delay)
+    random_fuzz(
+        dev,
+        arb_id_filter,
+        data_filter,
+        min_arb_id,
+        max_arb_id,
+        min_data_len,
+        max_data_len,
+        delay,
+    )
 
 
 @fuzzer.command(help="Generate mutate messages and send them.")
