@@ -8,16 +8,25 @@ from .utils import *
 
 T = Manager().dict()
 
-# TODO: needs to be fixed
-def get_value(signal, data):
-    v = "".join("{0:08b}".format(i) for i in data)
-    v = v[signal["start"] : signal["start"] + signal["length"]]
-    v = int(v, 2)
-    v = struct.pack("@h", v)
-    v = int(binascii.hexlify(v).decode(), 16)
-    v = signal["offset"] + signal["factor"] * v
+def parse_frame(data: Frame.data, signals: dict) -> dict:
+    message = {}
+    b = "".join("{0:08b}".format(i) for i in data)
+    for name, signal in signals.items():
+        v = b[signal["start"]: signal["start"] + signal["length"]]
+        v = int(v, 2)
+        if not signal["is_big_endian"] and v > 255:
+            v = hex(v)[2:]
+            v = bytearray.fromhex(v)
+            v.reverse()
+            v = int(v.hex(), 16)
+        v = signal["offset"] + signal["factor"] * v
 
-    return v
+        message[name] = {
+            "value": v,
+            "unit": signal["unit"] if signal["unit"] is not None else ""
+        }
+
+    return message
 
 
 def parse_data(data, mode):
@@ -30,7 +39,7 @@ def parse_data(data, mode):
 
 
 def update_t(start_time, T):
-    """Save frames in five second to T."""
+    """Save frames within 5 second to T."""
     for arb_id, frame_list in T.items():
         for index, frame in enumerate(frame_list):
             if time.time() - start_time - frame.timestamp > 5:
@@ -135,10 +144,10 @@ def draw_table(stdscr, dev, T, DBC):
                 and expanded_arb_ids[arb_id] == True
             ):
                 table.append("-" + row)
-                for name, signal in DBC[arb_id]["signals"].items():
-                    value = get_value(signal, frame.data)
-                    unit = signal["unit"] if signal["unit"] else ""
-                    table.append("|---{}: {} {}".format(name, value, unit))
+                message = parse_frame(frame.data, DBC[arb_id]["signals"])
+                for name, signal in message.items():
+                    table.append("|---{}: {} {}".format(name, *signal.values()))
+
             elif arb_id in DBC.keys():
                 table.append("+" + row)
             else:
