@@ -1,4 +1,5 @@
 import time
+import glob
 import struct
 import curses
 import binascii
@@ -185,9 +186,16 @@ def draw_table(stdscr, dev, T, DBC):
         time.sleep(0.01)
         k = stdscr.getch()
 
+def generate_dbc(path) -> dict:
+    DBC = {}
+    dbc_path_list = glob.glob(path)
+    for dbc_path in dbc_path_list:
+        d = dbc_to_dict(dbc_path)
+        DBC = {**DBC, **d}
+    return DBC
 
 def sniff(dev, dbc: str = None) -> None:
     traffic_handler_process = Process(target=traffic_handler, args=[dev, T])
     traffic_handler_process.start()
-    DBC = dbc_to_dict(dbc) if dbc else {}
+    DBC = generate_dbc(dbc) if dbc else {}
     curses.wrapper(draw_table, dev, T, DBC)
