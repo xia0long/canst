@@ -7,30 +7,36 @@ from multiprocessing import Process, Manager
 
 from .utils import *
 
+DWELL_TIME = 60
+
 T = Manager().dict()
+
 
 def parse_frame(data: Frame.data, signals: dict) -> dict:
     message = {}
     b = "".join("{0:08b}".format(i) for i in data)
     for name, signal in signals.items():
-        v = b[signal["start"]: signal["start"] + signal["length"]]
-        v = int(v, 2)
-        if not signal["is_big_endian"] and v > 255:
-            v = hex(v)[2:]
-            v = bytearray.fromhex(v)
-            v.reverse()
-            v = int(v.hex(), 16)
-        v = signal["offset"] + signal["factor"] * v
+        v = b[signal["start"] : signal["start"] + signal["length"]]
+        try:
+            v = int(v, 2)
+            if not signal["is_big_endian"] and v > 255:
+                v = hex(v)[2:]
+                v = bytearray.fromhex(v)
+                v.reverse()
+                v = int(v.hex(), 16)
+            v = signal["offset"] + signal["factor"] * v
+        except:
+            v = "error"
 
         message[name] = {
             "value": v,
-            "unit": signal["unit"] if signal["unit"] is not None else ""
+            "unit": signal["unit"] if signal["unit"] is not None else "",
         }
 
     return message
 
 
-def parse_data(data, mode):
+def parse_data(data, mode) -> str:
     if mode:
         data_str = " ".join("{0:08b}".format(i) for i in data)
     else:
@@ -39,11 +45,11 @@ def parse_data(data, mode):
     return data_str
 
 
-def update_t(start_time, T):
-    """Save frames within 5 second to T."""
+def update_t(start_time: float, T: dict) -> dict:
+    """Save frames within DWELL_TIME second to T."""
     for arb_id, frame_list in T.items():
         for index, frame in enumerate(frame_list):
-            if time.time() - start_time - frame.timestamp > 5:
+            if time.time() - start_time - frame.timestamp > DWELL_TIME:
                 frame_list.pop(index)
                 T[arb_id] = frame_list
             else:
@@ -66,7 +72,7 @@ def traffic_handler(dev, T):
 
 
 # reference: https://support.vector.com/kb?id=kb_article_view&sysparm_article=KB0012332&sys_kb_id=99354e281b2614148e9a535c2e4bcb6d&spa=1
-def calculate_bus_load(baudrate=500000):
+def calculate_bus_load(baudrate: int = 500000) -> float:
     sum = 0
     for _, frame_list in T.items():
         if not frame_list:
@@ -135,9 +141,15 @@ def draw_table(stdscr, dev, T, DBC):
                 continue
             frame = frame_list[-1]  # get the latest frame
 
+            name = DBC[arb_id]["name"] if arb_id in DBC.keys() else ""
             data = parse_data(frame.data, binary)
-            row = "{:<10.3f} {:<6s} {:<8s} {:<25s} {}".format(
-                frame.timestamp, dev.ndev, hex(arb_id)[2:], data, len(frame_list) / 5
+            row = "{:<10.3f} {:<6s} {:<8s} {:<25s} {:<4.1f} {}".format(
+                frame.timestamp,
+                dev.ndev,
+                hex(arb_id)[2:],
+                data,
+                len(frame_list) / DWELL_TIME,
+                name,
             )
             if (
                 arb_id in DBC.keys()
@@ -186,6 +198,7 @@ def draw_table(stdscr, dev, T, DBC):
         time.sleep(0.01)
         k = stdscr.getch()
 
+
 def generate_dbc(path) -> dict:
     DBC = {}
     dbc_path_list = glob.glob(path)
@@ -193,6 +206,7 @@ def generate_dbc(path) -> dict:
         d = dbc_to_dict(dbc_path)
         DBC = {**DBC, **d}
     return DBC
+
 
 def sniff(dev, dbc: str = None) -> None:
     traffic_handler_process = Process(target=traffic_handler, args=[dev, T])
